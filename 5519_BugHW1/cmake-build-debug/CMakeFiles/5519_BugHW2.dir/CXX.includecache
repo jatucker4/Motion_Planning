@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/John/CLionProjects/5519_BugHW2/Bug.h
+string
+-
+cmath
+-
+iostream
+-
+Workspace.h
+C:/Users/John/CLionProjects/5519_BugHW2/Workspace.h
+
+C:/Users/John/CLionProjects/5519_BugHW2/Workspace.h
+tuple
+-
+utility
+-
+vector
+-
+
+C:/Users/John/CLionProjects/5519_BugHW2/main.cpp
+iostream
+-
+Bug.h
+C:/Users/John/CLionProjects/5519_BugHW2/Bug.h
+fstream
+-
+

@@ -1,0 +1,3 @@
+"D:\Program Files\JetBrains\CLion 2020.2.1\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\5519_HW3.dir/objects.a
+"D:\Program Files (x86)\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin\ar.exe" cr CMakeFiles\5519_HW3.dir/objects.a @CMakeFiles\5519_HW3.dir\objects1.rsp
+"D:\Program Files (x86)\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin\g++.exe" -g   -Wl,--whole-archive CMakeFiles\5519_HW3.dir/objects.a -Wl,--no-whole-archive  -o 5519_HW3.exe -Wl,--out-implib,lib5519_HW3.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\5519_HW3.dir\linklibs.rsp

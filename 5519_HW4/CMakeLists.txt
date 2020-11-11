@@ -3,4 +3,4 @@ project(5519_HW4)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(5519_HW4 main.cpp PRMPlanner.cpp PRMPlanner.h)
+add_executable(5519_HW4 main.cpp PRMPlanner.h CSpace2D.h randutils.hpp GoalRRT.h Astar.h)

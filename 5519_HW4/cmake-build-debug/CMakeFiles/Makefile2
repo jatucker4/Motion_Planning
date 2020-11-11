@@ -93,12 +93,12 @@ clean: CMakeFiles/5519_HW4.dir/clean
 CMakeFiles/5519_HW4.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\5519_HW4.dir\build.make CMakeFiles/5519_HW4.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\5519_HW4.dir\build.make CMakeFiles/5519_HW4.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=C:\Users\John\CLionProjects\Motion_Planning\5519_HW4\cmake-build-debug\CMakeFiles --progress-num=1,2,3 "Built target 5519_HW4"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=C:\Users\John\CLionProjects\Motion_Planning\5519_HW4\cmake-build-debug\CMakeFiles --progress-num=1,2 "Built target 5519_HW4"
 .PHONY : CMakeFiles/5519_HW4.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/5519_HW4.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\John\CLionProjects\Motion_Planning\5519_HW4\cmake-build-debug\CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\John\CLionProjects\Motion_Planning\5519_HW4\cmake-build-debug\CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/5519_HW4.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start C:\Users\John\CLionProjects\Motion_Planning\5519_HW4\cmake-build-debug\CMakeFiles 0
 .PHONY : CMakeFiles/5519_HW4.dir/rule

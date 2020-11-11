@@ -142,33 +142,6 @@ depend:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\5519_HW4.dir\build.make CMakeFiles/5519_HW4.dir/build
 .PHONY : 5519_HW4/fast
 
-PRMPlanner.obj: PRMPlanner.cpp.obj
-
-.PHONY : PRMPlanner.obj
-
-# target to build an object file
-PRMPlanner.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\5519_HW4.dir\build.make CMakeFiles/5519_HW4.dir/PRMPlanner.cpp.obj
-.PHONY : PRMPlanner.cpp.obj
-
-PRMPlanner.i: PRMPlanner.cpp.i
-
-.PHONY : PRMPlanner.i
-
-# target to preprocess a source file
-PRMPlanner.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\5519_HW4.dir\build.make CMakeFiles/5519_HW4.dir/PRMPlanner.cpp.i
-.PHONY : PRMPlanner.cpp.i
-
-PRMPlanner.s: PRMPlanner.cpp.s
-
-.PHONY : PRMPlanner.s
-
-# target to generate assembly for a file
-PRMPlanner.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\5519_HW4.dir\build.make CMakeFiles/5519_HW4.dir/PRMPlanner.cpp.s
-.PHONY : PRMPlanner.cpp.s
-
 main.obj: main.cpp.obj
 
 .PHONY : main.obj
@@ -205,9 +178,6 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... 5519_HW4
-	@echo ... PRMPlanner.obj
-	@echo ... PRMPlanner.i
-	@echo ... PRMPlanner.s
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s

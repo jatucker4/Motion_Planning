@@ -1,27 +1,22 @@
 //
-// Created by John on 10/26/2020.
+// Created by John on 11/3/2020.
 //
 
-#ifndef INC_5519_HW4_PRMPLANNER_H
-#define INC_5519_HW4_PRMPLANNER_H
-#include "CSpace2D.h"
-#include <random>
-#include <ctime>
-#include <chrono>
-#include <thread>
-#include <utility>
-#include "randutils.hpp"
-#include <map>
-#include <unordered_map>
+#ifndef INC_5519_HW4_GOALRRT_H
+#define INC_5519_HW4_GOALRRT_H
+#include "PRMPlanner.h"
 
-class PRMPlanner {
+class GoalRRT {
 public:
-    PRMPlanner(CSpace2D &myspace, int numConfigs, double radius, tuple<double,double> qStart, tuple<double,double> qgoal);
-    void sampleSpace();
+    GoalRRT(CSpace2D &myspace, int numIters, double radius, tuple<double,double> qStart, tuple<double,double> qgoal,
+            double goalProb, double goalTerm);
+//    void sampleSpace();
     double numConnections();
-    void reconstructPath();
-    void connectSamples();
+//    void reconstructPath();
+//    void connectSamples();
+    void makeMap();
     void findPathToGoal();
+    void RRT();
     static bool compareFunc(pair<int,double> &a, pair<int,double> &b);
     bool doIntersect(tuple<double,double> p1, tuple<double,double> q1, tuple<double,double> p2, tuple<double,double> q2);
     bool checkCollisionPath(vector<tuple<double,double>> coords);
@@ -32,10 +27,10 @@ public:
     tuple<double, double> vectorDiff(tuple<double, double> vec1, tuple<double, double> vec2);
     double vectorMag(tuple<double, double> vec);
     void makePlan();
+    tuple<double, double> vectorAdd(tuple<double, double> tuple2, tuple<double, double> tuple1);
 
     bool flag;
-    int flag2;
-    int numSamples;
+    int maxIters;
     tuple<int,int> yBounds;
     tuple<int,int> xBounds;
     vector<tuple<double,double>> nodeIters;
@@ -43,81 +38,55 @@ public:
     vector<tuple<int,int>> cameFrom;
     CSpace2D *mySpace2D;
     tuple<double,double> qstart;
+    double epsilon;
     tuple<double,double> qgoal;
     ArrayXXd nodeMap;
-    tuple<double,double> nBest;
     double r;
+    int flag2;
+    double pGoal;
     VectorXd ofInterest;
+    vector<tuple<double,double,double,double>> nodeConns;
+    tuple<double,double> goalBiasRange;
+
+
 };
 
-PRMPlanner::PRMPlanner(CSpace2D &myspace, int numConfigs, double radius, tuple<double, double> qStart,
-                       tuple<double, double> qGoal) {
-    numSamples = numConfigs;
+GoalRRT::GoalRRT(CSpace2D &myspace, int numIters, double radius, tuple<double, double> qStart,
+                       tuple<double, double> qGoal, double goalProb, double goalTerm) {
+    epsilon = goalTerm;
+    maxIters = numIters;
+    pGoal = goalProb;
     r = radius;
     yBounds = myspace.yBound;
     xBounds = myspace.xBound;
     mySpace2D =&myspace;
-    nodeIters.push_back(qStart);
-    nodeIters.push_back(qGoal);
-    nodeMap = ArrayXXd::Zero(numSamples+2,numSamples+2);
     qstart = qStart;
     qgoal = qGoal;
     flag = true;
-    flag2 = 0;
+    goalBiasRange = tuple<double,double>(0.05,0.1);
+    flag2 = 1;
     makePlan();
 }
+//
+//void GoalRRT::sampleSpace() {
+//    random_device rd;
+//    mt19937 eng(rd());
+//    uniform_real_distribution<> xdist(get<0>(xBounds), get<1>(xBounds));
+//    uniform_real_distribution<> ydist(get<0>(yBounds), get<1>(yBounds));
+//    for(int i = 0; i <= numSamples; i++){
+//        tuple<double,double> temp(xdist(eng),ydist(eng));
+//        nodeIters.push_back(temp);
+//    }
+//}
 
-void PRMPlanner::sampleSpace() {
-    // We'll sample a unifrom distribution from xmin to xmax and ymin to ymax
-    // Obtaining an i-j iteration combination that corresponds to a discretized point in the CSpace
-    static random_device rd;
-    static mt19937 eng(rd());
-    uniform_real_distribution<> xdist(get<0>(xBounds), get<1>(xBounds));
-    uniform_real_distribution<> ydist(get<0>(yBounds), get<1>(yBounds));
-
-    for(int i = 0; i <= numSamples; i++){
-        tuple<double,double> temp(xdist(eng),ydist(eng));
-//        tuple<double,double> temp(rng.uniform(xMin, xMax),rng.uniform(yMin,yMax));
-//        xNode = xMin + (rand() / ( RAND_MAX / (xMax-xMin) ) ) ;
-//        yNode = yMin + (rand() / ( RAND_MAX / (yMax-yMin) ) ) ;
-//        tuple<double,double> temp(xNode,yNode);
-        nodeIters.push_back(temp);
-    }
-}
-
-void PRMPlanner::connectSamples() {
-    // Need a distanceToNode function
-    // Need collision checking that includes the primitive. See link design from hw 2
-    // Create a matrix that's 200 by 200
-    // Iterate through every possible combination of nodes and mark a 1 in that part of the matrix if they are connected
-    // and no collisions are present
-    tuple<double,double> node1;
-    tuple<double,double> node2;
-    vector<tuple<double,double>> colCheck;
-    double dist;
-    for(int i = 0; i<= numSamples-1; i++){
-        node1 = nodeIters[i];
-        for(int j = 0; j<= numSamples-1; j++){
-            node2 = nodeIters[j];
-            dist = distanceToNode(node1, node2);
-            colCheck.push_back(node1);
-            colCheck.push_back(node2);
-            if(node1!=node2 && dist<r && !checkCollisionPath(colCheck) && !checkCollision(node1) && !checkCollision(node2)){
-                nodeMap(j,i) = 1;
-            }
-            colCheck.clear();
-        }
-    }
-}
-
-double PRMPlanner::distanceToNode(tuple<double, double> target1, tuple<double,double> target2) {
+double GoalRRT::distanceToNode(tuple<double, double> target1, tuple<double,double> target2) {
     tuple<double,double> vecDiff = vectorDiff(target1, target2);
     double distToLocation = vectorMag(vecDiff);
 
     return distToLocation;
 }
 
-double PRMPlanner::vectorMag(tuple<double, double> vec) {
+double GoalRRT::vectorMag(tuple<double, double> vec) {
     double x = get<0>(vec);
     double y = get<1>(vec);
     double exponent = 2.0;
@@ -125,7 +94,7 @@ double PRMPlanner::vectorMag(tuple<double, double> vec) {
     return magnitude;
 }
 
-tuple<double, double> PRMPlanner::vectorDiff(tuple<double, double> vec1, tuple<double, double> vec2) {
+tuple<double, double> GoalRRT::vectorDiff(tuple<double, double> vec1, tuple<double, double> vec2) {
     double diffX = get<0>(vec2) - get<0>(vec1);
     double diffY = get<1>(vec2) - get<1>(vec1);
     tuple<double, double> vecDiff(diffX, diffY);
@@ -133,30 +102,30 @@ tuple<double, double> PRMPlanner::vectorDiff(tuple<double, double> vec1, tuple<d
     return vecDiff;
 }
 
-bool PRMPlanner::checkCollisionPath(vector<tuple<double,double>> coords) {
+bool GoalRRT::checkCollisionPath(vector<tuple<double,double>> coords) {
     // the variable coords contains the origin locations for each link;
     tuple<double,double> link1Origin = coords[0];
     tuple<double,double> link2Origin = coords[1];
     for(auto obstacle : mySpace2D->obstacles){
         // If one of the obstacles is a triangle the primitives need to be created in a special way.
-            // Else it's a rectangle and we can do as before
-            tuple<double,double> obsVert1 = obstacle[0];
-            tuple<double,double> obsVert2 = obstacle[1];
-            tuple<double,double> obsVert3 = obstacle[2];
-            tuple<double,double> obsVert4 = obstacle[3];
+        // Else it's a rectangle and we can do as before
+        tuple<double,double> obsVert1 = obstacle[0];
+        tuple<double,double> obsVert2 = obstacle[1];
+        tuple<double,double> obsVert3 = obstacle[2];
+        tuple<double,double> obsVert4 = obstacle[3];
 
-            bool prim1 = doIntersect(link1Origin,link2Origin, obsVert1, obsVert2);
-            bool prim2 = doIntersect(link1Origin,link2Origin, obsVert2,obsVert3);
-            bool prim3 = doIntersect(link1Origin,link2Origin, obsVert3,obsVert4);
-            bool prim4 = doIntersect(link1Origin,link2Origin, obsVert4,obsVert1);
+        bool prim1 = doIntersect(link1Origin,link2Origin, obsVert1, obsVert2);
+        bool prim2 = doIntersect(link1Origin,link2Origin, obsVert2,obsVert3);
+        bool prim3 = doIntersect(link1Origin,link2Origin, obsVert3,obsVert4);
+        bool prim4 = doIntersect(link1Origin,link2Origin, obsVert4,obsVert1);
 
-            if(prim1 || prim2 || prim3 || prim4){
-                return true;
-            }
+        if(prim1 || prim2 || prim3 || prim4){
+            return true;
         }
+    }
     return false;
 }
-bool PRMPlanner::onSegment(tuple<double,double> p, tuple<double,double> q, tuple<double,double> r){
+bool GoalRRT::onSegment(tuple<double,double> p, tuple<double,double> q, tuple<double,double> r){
 
     if (get<0>(q) <= max(get<0>(p), get<0>(r)) && get<0>(q) >= min(get<0>(p), get<0>(r)) &&
         get<1>(q) <= max(get<1>(p), get<1>(r)) && get<1>(q) >= min(get<1>(p), get<1>(r))){
@@ -165,7 +134,7 @@ bool PRMPlanner::onSegment(tuple<double,double> p, tuple<double,double> q, tuple
     return false;
 }
 
-double PRMPlanner::orientation(tuple<double,double> p, tuple<double,double> q, tuple<double,double> r){
+double GoalRRT::orientation(tuple<double,double> p, tuple<double,double> q, tuple<double,double> r){
     double val = (get<1>(q) - get<1>(p)) * (get<0>(r) - get<0>(q)) -
                  (get<0>(q) - get<0>(p)) * (get<1>(r) - get<1>(q));
 
@@ -174,7 +143,7 @@ double PRMPlanner::orientation(tuple<double,double> p, tuple<double,double> q, t
     return (val > 0)? 1: 2; // clock or counterclock wise
 }
 
-bool PRMPlanner::doIntersect(tuple<double,double> p1, tuple<double,double> q1, tuple<double,double> p2, tuple<double,double> q2){
+bool GoalRRT::doIntersect(tuple<double,double> p1, tuple<double,double> q1, tuple<double,double> p2, tuple<double,double> q2){
     // Simple intersection function pulled from tutorials.org
     // Find the four orientations needed for general and
     // special cases
@@ -201,7 +170,7 @@ bool PRMPlanner::doIntersect(tuple<double,double> p1, tuple<double,double> q1, t
     return false; // Doesn't fall in any of the above cases
 }
 
-bool PRMPlanner::checkCollision(tuple<double,double> node) {
+bool GoalRRT::checkCollision(tuple<double,double> node) {
     //Iterate through each obstacle, construct primitaves and check if there was a collision
     double xLoc = get<0>(node);
     double yLoc = get<1>(node);
@@ -218,9 +187,9 @@ bool PRMPlanner::checkCollision(tuple<double,double> node) {
     return false;
 }
 
-void PRMPlanner::findPathToGoal() {
-    nBest = qstart;
-
+void GoalRRT::findPathToGoal() {
+///////////////////////LETS ATTEMPT A*///////////////////////////////
+    tuple<double,double> nBest = qstart;
     vector<double> valueCopy1;
     vector<double> valueCopy2;
     vector<int> queueNodeIndex;
@@ -288,43 +257,26 @@ void PRMPlanner::findPathToGoal() {
             }
         }
 
-        if(nBest == qgoal){
+        if(distanceToNode(nBest,qgoal) <= epsilon){
             break;
         }
 
         sort(openList.begin(),openList.end(),compareFunc);
 
         iter++;
-        if(iter == 5000){
-            flag2 = 1;
-            break;
+        if(iter == maxIters){
+            flag2 = 0;
         }
     }
-    if(indexOfInterest!=1){
-        flag2 = 1;
-    }
 }
 
-void PRMPlanner::makePlan() {
-    int iter = 0;
-//    while(flag){
-        sampleSpace();
-        connectSamples();
-        findPathToGoal();
-//        if(flag2){
-//            nodeIters.clear();
-//            nodeMap = ArrayXXd::Zero(numSamples+2,numSamples+2);
-//            nodePath.clear();
-//            iter++;
-//        }
-//        if(iter > 1000){
-//            cout << "NO SOLUTION" << endl;
-//            break;
-//        }
-//    }
+void GoalRRT::makePlan() {
+    RRT();
+    makeMap();
+    findPathToGoal();
 }
 
-double PRMPlanner::numConnections() {
+double GoalRRT::numConnections() {
     double conCount = 0;
     for(int i = 0; i!=ofInterest.size(); i++){
         if(ofInterest[i] == 1){
@@ -334,20 +286,109 @@ double PRMPlanner::numConnections() {
     return conCount;
 }
 
-bool PRMPlanner::compareFunc(pair<int,double> &a, pair<int,double> &b) {
+bool GoalRRT::compareFunc(pair<int,double> &a, pair<int,double> &b) {
     return a.second > b.second;
 }
 
-void PRMPlanner::reconstructPath() {
-    int nextParent;
-    int currParent = get<0>(cameFrom[cameFrom.size()-1]);
-    tuple<double,double> currNode;
-    while(currNode!=qstart){
-        for(int i = 0; i!=cameFrom.size(); i++){
+void GoalRRT::RRT() {
+    //Need to generate a random sample between 0 and 1
+    //If this sample lies within the goal bias range then set the same to qgoal
+    //If it doesn't than sample Qfree
+    tuple<double,double> qNear;
+    tuple<double,double> qNew;
+    tuple<double,double> qRand;
+    tuple<double,double,double,double> lineSeg;
+    tuple<double,double> v;
+    tuple<double,double> u;
+    tuple<double,double> pathInc;
+    vector<tuple<double,double>> checkCol;
+    double biasCheck;
+    double distPrev;
+    double distCurr;
+    nodeIters.push_back(qstart);
+    qNear = qstart;
+    double stepSize = 0.5;
+    static random_device rd;
+    bool flag1 = true;
+    int iters = 0;
+    static mt19937 eng(rd());
+    uniform_real_distribution<> xdist(get<0>(xBounds), get<1>(xBounds));
+    uniform_real_distribution<> ydist(get<0>(yBounds), get<1>(yBounds));
+    uniform_real_distribution<> sampOne(0, 1);
+    while(true){
+        iters++;
+        //Get a random sample between 0 and 1;
+        biasCheck = sampOne(eng);
+        if(biasCheck <= pGoal) {
+            qRand = qgoal;
+        }else{
+            while(flag1){
+                qRand = tuple<double,double>(xdist(eng),ydist(eng));
+                if(!checkCollision(qRand)){
+                    flag1 = false;
+                }
+            }
+        }
+        flag1 = true;
+        // Next we need to find the closest node to this sampled node
+        distPrev = distanceToNode(qRand,qstart);
+        for(int i = 0; i!=nodeIters.size(); i++){
+            distCurr = distanceToNode(nodeIters[i],qRand);
+            if(distCurr<distPrev){
+                qNear = nodeIters[i];
+                distPrev = distCurr;
+            }
+//            if(distCurr <= r){
+//                qNear = nodeIters[i];
+//                break;
+//            }
+        }
+        // Now we need to take a step in that direction and if that segment is collision free we can add it to the list
+        // node iters
+        v = vectorDiff(qNear,qRand);
+        u = tuple<double,double>(stepSize * get<0>(v)/vectorMag(v),stepSize * get<1>(v)/vectorMag(v) );
+        pathInc = vectorAdd(qNear,u);
+        checkCol.push_back(qNear);
+        checkCol.push_back(pathInc);
+//        checkCol.push_back(qNear);
+//        checkCol.push_back(qRand);
+        if(!checkCollisionPath(checkCol) && !checkCollision(pathInc)) {
+            qNew = pathInc;
+            nodeIters.push_back(qNew);
+            lineSeg = make_tuple(get<0>(qNear),get<1>(qNear),get<0>(pathInc),get<1>(pathInc));
+            nodeConns.push_back(lineSeg);
+            if (distanceToNode(qNew, qgoal) <= epsilon) {
+                break;
+            }
+        }
+        if(iters == maxIters){
+            flag2 = 0;
+            break;
+        }
+        checkCol.clear();
+    }
+}
 
+void GoalRRT::makeMap(){
+    nodeMap = ArrayXXd::Zero(nodeIters.size(),nodeIters.size());
+    tuple<double,double,double,double> tempInc;
+    for(int i = 0; i!= nodeIters.size(); i++){
+        for(int j = 0; j!= nodeIters.size(); j++){
+            tempInc = make_tuple(get<0>(nodeIters[i]),get<1>(nodeIters[i]),get<0>(nodeIters[j]),get<1>(nodeIters[j]));
+            for(int k = 0; k!=nodeConns.size(); k++){
+                if( tempInc == nodeConns[k]){
+                    nodeMap(i,j) = 1;
+                }
+            }
         }
     }
 }
 
+tuple<double, double> GoalRRT::vectorAdd(tuple<double, double> tuple2, tuple<double, double> tuple1) {
+    double diffX = get<0>(tuple1) + get<0>(tuple2);
+    double diffY = get<1>(tuple1) + get<1>(tuple2);
+    tuple<double, double> vecAdd(diffX, diffY);
+    return vecAdd;
+}
 
-#endif //INC_5519_HW4_PRMPLANNER_H
+#endif //INC_5519_HW4_GOALRRT_H

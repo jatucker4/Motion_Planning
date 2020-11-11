@@ -80,13 +80,22 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/PRMPlanner.cpp">
+		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/Astar.h">
+			<Option target="5519_HW4"/>
+		</Unit>
+		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/CSpace2D.h">
+			<Option target="5519_HW4"/>
+		</Unit>
+		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/GoalRRT.h">
 			<Option target="5519_HW4"/>
 		</Unit>
 		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/PRMPlanner.h">
 			<Option target="5519_HW4"/>
 		</Unit>
 		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/main.cpp">
+			<Option target="5519_HW4"/>
+		</Unit>
+		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/randutils.hpp">
 			<Option target="5519_HW4"/>
 		</Unit>
 		<Unit filename="C:/Users/John/CLionProjects/Motion_Planning/5519_HW4/CMakeLists.txt">
